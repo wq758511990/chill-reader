@@ -60,11 +60,6 @@
           "default": 50,
           "description": "Number of characters to display per line."
         },
-        "chill-reader.pageSize": {
-          "type": "number",
-          "default": 1000,
-          "description": "Number of characters per page (logical page size for jump)."
-        },
         "chill-reader.linesPerPage": {
           "type": "number",
           "default": 1,

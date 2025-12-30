@@ -1,13 +1,13 @@
 export class PaginationService {
-    public getTotalPages(totalLength: number, pageSize: number): number {
-        return Math.ceil(totalLength / pageSize);
+    public getTotalPages(totalLength: number, displayCapacity: number): number {
+        return Math.max(1, Math.ceil(totalLength / displayCapacity));
     }
 
-    public getPageFromPosition(position: number, pageSize: number): number {
-        return Math.floor(position / pageSize) + 1;
+    public getPageFromPosition(position: number, displayCapacity: number): number {
+        return Math.floor(position / displayCapacity) + 1;
     }
 
-    public getPositionFromPage(page: number, pageSize: number): number {
-        return (page - 1) * pageSize;
+    public getPositionFromPage(page: number, displayCapacity: number): number {
+        return (page - 1) * displayCapacity;
     }
 }

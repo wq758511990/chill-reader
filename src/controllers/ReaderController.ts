@@ -46,6 +46,10 @@ export class ReaderController {
         this.searchService = new SearchService();
     }
 
+    private getDisplayCapacity(): number {
+        return this.configService.getLinesPerPage() * this.configService.getCharsPerLine();
+    }
+
     public async start() {
         const lastBookPath = this.persistenceService.getLastBookPath();
         if (lastBookPath) {
@@ -104,7 +108,6 @@ export class ReaderController {
             const savedState = this.persistenceService.getState(this.currentBook.id);
             if (savedState) {
                 this.currentState = savedState;
-                this.currentState.pageSize = this.configService.getPageSize();
                 this.currentState.linesPerPage = this.configService.getLinesPerPage();
                 // We don't restore history perfectly, but that's acceptable for reload
                 this.positionHistory = []; 
@@ -114,7 +117,6 @@ export class ReaderController {
                     currentPosition: 0,
                     totalLength: this.currentText.length,
                     lastReadTime: Date.now(),
-                    pageSize: this.configService.getPageSize(),
                     linesPerPage: this.configService.getLinesPerPage()
                 };
                 this.positionHistory = [];
@@ -173,8 +175,9 @@ export class ReaderController {
     public async jumpToPageDialog() {
         if (!this.isReading || !this.currentState) return;
 
-        const totalPages = this.paginationService.getTotalPages(this.currentState.totalLength, this.currentState.pageSize);
-        const currentPage = this.paginationService.getPageFromPosition(this.currentState.currentPosition, this.currentState.pageSize);
+        const displayCapacity = this.getDisplayCapacity();
+        const totalPages = this.paginationService.getTotalPages(this.currentState.totalLength, displayCapacity);
+        const currentPage = this.paginationService.getPageFromPosition(this.currentState.currentPosition, displayCapacity);
 
         const input = await vscode.window.showInputBox({
             prompt: `Jump to Page (Current: ${currentPage} / Total: ${totalPages})`,
@@ -190,9 +193,9 @@ export class ReaderController {
 
         if (input) {
             const page = parseInt(input);
-            const newPos = this.paginationService.getPositionFromPage(page, this.currentState.pageSize);
+            const newPos = this.paginationService.getPositionFromPage(page, displayCapacity);
             
-            this.positionHistory.push(this.currentState.currentPosition); // Save state before jump
+            this.positionHistory.push(this.currentState.currentPosition); 
             this.currentState.currentPosition = newPos;
             this.updateState();
             this.renderCurrentPage();
@@ -208,7 +211,9 @@ export class ReaderController {
         });
 
         if (query) {
-            const matches = this.searchService.search(this.currentText, query, this.currentState.pageSize);
+            const displayCapacity = this.getDisplayCapacity();
+            const matches = this.searchService.search(this.currentText, query, displayCapacity);
+            
             if (matches.length === 0) {
                 vscode.window.showInformationMessage(`No matches found for "${query}"`);
                 return;
@@ -225,11 +230,8 @@ export class ReaderController {
             });
 
             if (selected) {
-                this.positionHistory.push(this.currentState.currentPosition); // Save state before jump
-                
-                // Jump to the exact position of the match, or page start
-                // Here we jump to the start of the logical page containing the match
-                const pageStart = this.paginationService.getPositionFromPage(selected.match.page, this.currentState.pageSize);
+                this.positionHistory.push(this.currentState.currentPosition); 
+                const pageStart = this.paginationService.getPositionFromPage(selected.match.page, displayCapacity);
                 this.currentState.currentPosition = pageStart;
                 
                 this.updateState();
@@ -263,31 +265,43 @@ export class ReaderController {
         const editor = vscode.window.activeTextEditor;
         if (!editor || !this.currentState) return;
 
-        // Use captured anchorLine, or fallback to something safe (though render engine handles visible range fallback)
         let renderLine = this.anchorLine;
-        
-        // Safety check if document changed drastically (e.g. lines deleted)
         if (renderLine !== undefined && renderLine >= editor.document.lineCount) {
             renderLine = editor.document.lineCount - 1;
         }
 
-        // Get a chunk of text to render
-        // We take enough text to cover the needed lines
-        const linesPerPage = this.configService.getLinesPerPage();
-        const charsPerLine = this.configService.getCharsPerLine();
-        const estimatedChunkSize = linesPerPage * (charsPerLine + 50); // +50 buffer
+        const displayCapacity = this.getDisplayCapacity();
         
+        // 抓取足够长度的文本
+        const estimatedChunkSize = displayCapacity * 10 + 500;
         const start = this.currentState.currentPosition;
         const end = Math.min(start + estimatedChunkSize, this.currentText.length);
         const textToRender = this.currentText.substring(start, end);
 
-        // Render
-        const result = this.renderEngine.render(editor, textToRender, renderLine);
+        // 1. 预渲染以获取实际消耗的字符长度
+        const preResult = this.renderEngine.render(editor, textToRender, renderLine);
         
-        // Update map for translation
+        // 如果抓取了一堆字符但全是空白，递归跳过
+        if (preResult.lineTexts.size === 0 && preResult.consumedLength > 0) {
+            this.currentState.currentPosition += preResult.consumedLength;
+            this.renderCurrentPage(); 
+            return;
+        }
+
+        // 2. 使用 PaginationService 统一计算页码
+        const totalLength = this.currentState.totalLength;
+        const totalPages = this.paginationService.getTotalPages(totalLength, displayCapacity);
+        let currentPage = this.paginationService.getPageFromPosition(start, displayCapacity);
+        
+        // 边界处理
+        if (start + preResult.consumedLength >= totalLength) {
+            currentPage = totalPages;
+        }
+
+        // 3. 正式渲染带页码的内容
+        const result = this.renderEngine.render(editor, textToRender, renderLine, currentPage, totalPages);
+        
         this.lineToTextMap = result.lineTexts;
-        
-        // Update consumed length for next page calculation
         this.currentParams.pageConsumedLength = result.consumedLength;
 
         editor.setDecorations(this.decoratorManager.getDecorationType(), result.decorations);

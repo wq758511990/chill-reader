@@ -1,10 +1,6 @@
 import * as vscode from 'vscode';
 
 export class ConfigurationService {
-    public getPageSize(): number {
-        return vscode.workspace.getConfiguration('chill-reader').get('pageSize', 1000);
-    }
-
     public getCharsPerLine(): number {
         return vscode.workspace.getConfiguration('chill-reader').get('charsPerLine', 50);
     }

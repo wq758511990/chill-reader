@@ -11,8 +11,7 @@ export interface ReaderState {
   currentPosition: number; // 字符偏移量或章节索引
   totalLength: number;
   lastReadTime: number;
-  pageSize: number;     // 每页字符数
-  linesPerPage: number; // 用户配置显示的行数
+  linesPerPage: number;
 }
 
 export interface TranslationCache {

@@ -1,43 +1,65 @@
-import * as vscode from 'vscode';
-
-export interface WrappedLine {
-    text: string;
-    length: number; 
-}
-
 export class TextUtils {
     /**
-     * Strictly splits text into chunks of maxChars length.
-     * Replaces newlines with spaces to ensure continuous flow.
+     * 智能贪婪折行：
+     * 1. 忽略原书中的单行换行，将文字尽可能填满 maxCharsPerLine。
+     * 2. 只有遇到连续换行（段落）或填满长度时才折行。
+     * 3. 自动跳过纯空白区域。
      */
-    public static wrapText(text: string, maxChars: number = 50): WrappedLine[] {
-        // 1. Flatten the text: Replace newlines with spaces
-        // We do this chunk by chunk to preserve 'length' mapping conceptually, 
-        // but since we are modifying the text structure (replacing \n with space is 1-to-1), length is preserved!
-        // Wait, \r\n is 2 chars -> 1 space? No, let's keep it simple.
-        // Just treat newlines as regular characters, but for DISPLAY, we replace them.
-        // Actually, if we replace \n with space in the output 'text', it looks good.
-        // The 'length' property should be the length CONSUMED from the input string.
-        
-        const lines: WrappedLine[] = [];
-        let cursor = 0;
-        
-        while (cursor < text.length) {
-            let chunkLength = Math.min(maxChars, text.length - cursor);
-            let chunkText = text.substring(cursor, cursor + chunkLength);
+    public static wrapText(text: string, maxCharsPerLine: number): { text: string; length: number }[] {
+        const lines: { text: string; length: number }[] = [];
+        let i = 0;
+
+        while (i < text.length) {
+            let lineText = "";
+            const startPos = i;
             
-            // Replace newlines with spaces for display purposes
-            // This ensures no "weird characters" or line breaks break the decoration
-            let displayText = chunkText.replace(/[\r\n]+/g, ' ');
+            // 跳过开头的空白（包括空格、制表符、换行符）
+            while (i < text.length && /\s/.test(text[i])) {
+                i++;
+            }
             
-            lines.push({
-                text: displayText,
-                length: chunkLength
-            });
-            
-            cursor += chunkLength;
+            if (i >= text.length) {
+                // 如果末尾全是空白，归入上一行长度
+                if (lines.length > 0) {
+                    lines[lines.length - 1].length += (i - startPos);
+                }
+                break;
+            }
+
+            // 抓取内容直到填满 maxCharsPerLine
+            while (lineText.length < maxCharsPerLine && i < text.length) {
+                const char = text[i];
+                const nextChar = text[i + 1];
+
+                // 遇到段落标识（双换行 \n\n 或 \n\r\n），强制切行
+                if (char === '\n' && (nextChar === '\n' || nextChar === '\r')) {
+                    // 跳过这一组换行符
+                    i += (nextChar === '\r' ? 3 : 2);
+                    break;
+                }
+
+                // 遇到单换行，转为空格处理（不折行）
+                if (char === '\n' || char === '\r') {
+                    if (lineText.length > 0 && lineText[lineText.length - 1] !== ' ') {
+                        lineText += " ";
+                    }
+                    i++;
+                    continue;
+                }
+
+                lineText += char;
+                i++;
+            }
+
+            const finalLine = lineText.trim();
+            if (finalLine.length > 0) {
+                lines.push({
+                    text: finalLine,
+                    length: i - startPos
+                });
+            }
         }
-        
+
         return lines;
     }
 }

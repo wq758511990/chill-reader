@@ -8,7 +8,7 @@ export class SearchService {
         this.paginationService = new PaginationService();
     }
 
-    public search(text: string, query: string, pageSize: number): SearchMatch[] {
+    public search(text: string, query: string, displayCapacity: number): SearchMatch[] {
         const matches: SearchMatch[] = [];
         if (!query || query.length === 0) return matches;
 
@@ -19,7 +19,7 @@ export class SearchService {
         let match;
         while ((match = regex.exec(text)) !== null) {
             const position = match.index;
-            const page = this.paginationService.getPageFromPosition(position, pageSize);
+            const page = this.paginationService.getPageFromPosition(position, displayCapacity);
             
             // Get preview context (10 chars before and after)
             const start = Math.max(0, position - 10);
