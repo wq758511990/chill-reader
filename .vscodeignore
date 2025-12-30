@@ -1,0 +1,17 @@
+.vscode/**
+.vscode-test/**
+out/test/**
+src/**
+.gitignore
+.gemini/**
+.specify/**
+GEMINI.md
+vsc-extension-quickstart.md
+**/*.map
+**/*.ts
+node_modules/**/test/**
+node_modules/**/docs/**
+tsconfig.json
+.eslintrc.json
+.eslintignore
+webpack.config.js
