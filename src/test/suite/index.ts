@@ -16,7 +16,11 @@ export function run(): Promise<void> {
         // But types might differ. Let's use the async pattern or standard pattern.
         // Assuming latest glob.
         
-		glob('**/**.test.js', { cwd: testsRoot }).then((files: string[]) => {
+		glob('**/**.test.js', { cwd: testsRoot }, (err, files) => {
+			if (err) {
+				return reject(err);
+			}
+
 			// Add files to the test suite
 			files.forEach(f => mocha.addFile(path.resolve(testsRoot, f)));
 
@@ -33,8 +37,6 @@ export function run(): Promise<void> {
 				console.error(err);
 				reject(err);
 			}
-		}).catch((err: any) => {
-            return reject(err);
-        });
+		});
 	});
 }

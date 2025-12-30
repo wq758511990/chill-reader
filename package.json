@@ -1,7 +1,13 @@
 {
   "name": "chill-reader",
+  "publisher": "wzx",
   "displayName": "Chill Reader",
+  "icon": "icon.png",
   "description": "A stealthy novel reader for VSCode",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wq758511990/chill-reader"
+  },
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.80.0"
