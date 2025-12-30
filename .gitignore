@@ -1,0 +1,13 @@
+node_modules/
+dist/
+out/
+build/
+.vscode-test/
+*.vsix
+.DS_Store
+.env*
+coverage/
+*.log
+.gemini/
+.specify/
+GEMINI.md

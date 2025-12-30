@@ -1,0 +1,120 @@
+{
+  "name": "chill-reader",
+  "displayName": "Chill Reader",
+  "description": "A stealthy novel reader for VSCode",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:chill-reader.start",
+    "onCommand:chill-reader.open"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "chill-reader.start",
+        "title": "Chill Reader: Continue / Start Reading"
+      },
+      {
+        "command": "chill-reader.open",
+        "title": "Chill Reader: Open New Book"
+      },
+      {
+        "command": "chill-reader.nextPage",
+        "title": "Chill Reader: Next Page"
+      },
+      {
+        "command": "chill-reader.prevPage",
+        "title": "Chill Reader: Previous Page"
+      },
+      {
+        "command": "chill-reader.bossKey",
+        "title": "Chill Reader: Boss Key (Hide)"
+      },
+      {
+        "command": "chill-reader.jumpToPage",
+        "title": "Chill Reader: Jump to Page"
+      },
+      {
+        "command": "chill-reader.search",
+        "title": "Chill Reader: Search"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Chill Reader",
+      "properties": {
+        "chill-reader.charsPerLine": {
+          "type": "number",
+          "default": 50,
+          "description": "Number of characters to display per line."
+        },
+        "chill-reader.pageSize": {
+          "type": "number",
+          "default": 1000,
+          "description": "Number of characters per page (logical page size for jump)."
+        },
+        "chill-reader.linesPerPage": {
+          "type": "number",
+          "default": 1,
+          "description": "Number of lines to display at once in the editor."
+        },
+        "chill-reader.opacity": {
+          "type": "number",
+          "default": 0.5,
+          "description": "Opacity of the text decoration (0.0 - 1.0)."
+        },
+        "chill-reader.customColor": {
+          "type": "string",
+          "default": "",
+          "description": "Custom CSS color for the text (e.g. '#6A9955'). If empty, uses theme's CodeLens color."
+        },
+        "chill-reader.cleanText": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically remove excessive blank lines and whitespace when loading a book."
+        },
+        "chill-reader.baiduAppId": {
+          "type": "string",
+          "default": "",
+          "description": "Baidu Translation App ID"
+        },
+        "chill-reader.baiduAppKey": {
+          "type": "string",
+          "default": "",
+          "description": "Baidu Translation App Key"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "dependencies": {
+    "epub2": "^3.0.1",
+    "google-translate-api-browser": "^4.2.0"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@types/vscode": "^1.80.0",
+    "@typescript-eslint/eslint-plugin": "^5.59.1",
+    "@typescript-eslint/parser": "^5.59.1",
+    "@vscode/test-electron": "^2.3.0",
+    "eslint": "^8.39.0",
+    "glob": "^8.1.0",
+    "mocha": "^10.2.0",
+    "typescript": "^5.0.4"
+  }
+}
